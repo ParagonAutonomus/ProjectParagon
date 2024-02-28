@@ -1,7 +1,7 @@
 #python -m pip install {package_name} CLUTCH ASF
 from djitellopy import tello
 from time import sleep
-import keypress as kp
+import KeyPressModule as kp
 import numpy as np
 import cv2
 import math
