@@ -13,13 +13,6 @@ fSpeed = 117/10 #Forward speed in cm / seconds
 aSpeed = 360/10 #Angular Speed in degreees/s
 interval = 0.25
 
-#the speed times the yaw equals the position,
-#add sin or cos of that to y and x
-#so i need second calculated yaw value
-#that the drone rotates "yaw "until its
-#equal to the waypoint yaw then just go forward
-#until position is equal 
-
 dInterval = fSpeed*interval
 aInterval = aSpeed*interval
 
@@ -39,32 +32,65 @@ a = 0
 yaw = 0
 
 
+
+
 def waypoint_click(event, x, y, flags, params):
     if event == cv2.EVENT_LBUTTONDOWN:
         #params are place, spot 1, spot 2, color, thickness
         #so we got x and y there, so one should 
-        a = 500
-        b = 245
-        c,d = 0,0
         #cv2.line(img, (a,b), (a,y), (0,0,0), 3)
         #cv2.line(img, (a,y), (x,y), (255,0,0), 3)
-        cv2.line(img, (a,b), (x,y), (0,0,255), 3)
+        centerX = 500
+        centerY = 245
+        goalX = 616
+        goalY = 355
+        cv2.line(img, (centerX,centerY), (x,y), (0,0,255), 3)
 
-        #d (forward speed)
-        c += float(math.sin(math.radians(x)))
-        d += float(math.cos(math.radians(y)))
-        print(f'({x},{y})')
-        print("c and d: " + f'({c},{d})')
+        #so this twas a good idea, attempt 2 below
+        # c += float(math.sin(math.radians(x)))
+        # d += float(math.cos(math.radians(y)))
+        # c^2 = a^2 + b^2 - 2ab cos(theta), need distance between the
+        #500,245 (drone), 616,355 (sim tar), x,y (curr face) 
+        #only param is that c is generated between click and 616
+        #this WORKS WAHOOO
+        a = math.sqrt(np.square(centerX-x)+np.square(centerY-y))
+        b = math.sqrt(np.square(centerX-goalX)+np.square(centerY-goalY))
+        c = math.sqrt(np.square(goalX-x)+np.square(goalY-y))
+        theta = (c*c - a*a - b*b)/(-2*a*b)
+        finalRad = math.acos(theta)
+        finalDeg = (180*finalRad)/np.pi
+
+        #turn amount in degrees
+
+        turnAmount = yaw - finalDeg
+
+        #turn duration at 36 deg/second
+        #potential to devide by aInterval as well
+        #to get turn incriments needed, which could
+        #be measuered by a variable
+
+        turnTime = turnAmount/aSpeed
+        turnCount = turnAmount/aInterval
+
+        if turnAmount > 0:
+            #impliment use of time as described above into loop somehow
+            yaw+=aInterval
+        else:
+            #same thing here, need a for loop which can either count
+            #the interval or go off of a set time, not sure on that yet
+            yaw-=aInterval
+        print(f'({x},{y},{finalDeg})')
+        print("theta" + f'({theta})')
         cv2.putText(img, f'({x},{y})', (x,y),
                     cv2.FONT_HERSHEY_COMPLEX, 0.5, (0,255,0), 2)
         #drawing a circle on the image
         cv2.circle(img, (x,y), 3, (0,0,0), -1)
-        cv2.circle(img, (x+int(20*c),y+int(20*d)), 5, (255,0,0), -1)
+        cv2.putText(img, f'({goalX},{goalY})', (goalX,goalY),
+                    cv2.FONT_HERSHEY_COMPLEX, 0.5, (0,255,0), 2)
+        cv2.circle(img, (goalX,goalY), 5, (255,0,0), -1)
     #going to try and draw from one place to another, need two lines
     
-    cv2.circle(img, (500,245), 7, (255, 0, 255), -1 )
-
-
+    cv2.circle(img, (centerX,centerY), 7, (255, 0, 255), -1 )
 
 
 def getKeyboardInput():
