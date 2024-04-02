@@ -25,11 +25,13 @@ me = tello.Tello()
 #me.takeoff()
 
 #this is the array for the displayed point values
+#initializers for global values
 
 points = [(0,0),(0,0)]
 x,y = 500,500
 a = 0
 yaw = 0
+yv = 0
 
 
 
@@ -72,13 +74,6 @@ def waypoint_click(event, x, y, flags, params):
         turnTime = turnAmount/aSpeed
         turnCount = turnAmount/aInterval
 
-        if turnAmount > 0:
-            #impliment use of time as described above into loop somehow
-            yaw+=aInterval
-        else:
-            #same thing here, need a for loop which can either count
-            #the interval or go off of a set time, not sure on that yet
-            yaw-=aInterval
         print(f'({x},{y},{finalDeg})')
         print("theta" + f'({theta})')
         cv2.putText(img, f'({x},{y})', (x,y),
@@ -92,9 +87,32 @@ def waypoint_click(event, x, y, flags, params):
     
     cv2.circle(img, (centerX,centerY), 7, (255, 0, 255), -1 )
 
+    #make the drone face the right direction
+
+    if turnAmount > 0:
+            #turn the drone until it is facing the same way
+            # turnAmount -= turnTime
+            # yv = -aSpeed
+            # yaw -= aInterval
+            sleep(interval)
+    else:
+            #turn the drone until it is facing the same way, just the other direction
+            # turnAmount += turnTime
+            # yv = aSpeed
+            # yaw += aInterval
+            sleep(interval)
+    autoMoveToSpot(x,y)
+
+#should move the drone forward until the values are the same
+
+def autoMoveToSpot(finalX, finalY):
+    while (x != finalX or x+1 != finalX) and (y != finalY or y+1 != finalY):
+        kp.getKey("UP")
+
+
 
 def getKeyboardInput():
-    lr, fb, ud, yv = 0,0,0,0
+    lr, fb, ud,yv = 0,0,0,0
     speed = 15
     aSpeed = 50
     global x,y,yaw,a
@@ -170,6 +188,7 @@ def drawPoints(img, points):
         cv2.circle(img, points[-1], 7,(0,255,255), cv2.FILLED)
     cv2.putText(img, f'({(points[-1][0]-500)/100},{(points[-1][1]-500)/100})m', 
                 (points[-1][0]+10,points[-1][1]+30),cv2.FONT_HERSHEY_PLAIN,1,(255,0,255),1)
+    
 while True:
     vals = getKeyboardInput()
     me.send_rc_control(vals[0],vals[1],vals[2],vals[3])
@@ -179,8 +198,8 @@ while True:
     drawPoints(img, points)
     cv2.imshow("Output",img)
     cv2.waitKey(1)
+    #waypoint_click()
     #just to quit to test for when drone isn't working and even if it is
-    i = cv2.waitKey(1) & 0xFF
-    if i == ord('l'):
+    if cv2.waitKey(1) & 0xFF == 27: 
         break
 cv2.destroyAllWindows()
