@@ -107,8 +107,11 @@ def waypoint_click(event, x, y, flags, params):
 
 def autoMoveToSpot(finalX, finalY):
     while (x != finalX or x+1 != finalX) and (y != finalY or y+1 != finalY):
-        kp.getKey("UP")
-
+        # set to go forward, 
+        # fb = speed
+        # d = dInterval
+        # a = 270
+        pass
 
 
 def getKeyboardInput():
