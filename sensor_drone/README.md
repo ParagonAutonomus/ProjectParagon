@@ -6,7 +6,7 @@
 1. Install prerequisite libraries
 - [ROS 2 Humble Installation Guide](https://docs.ros.org/en/humble/Installation/Ubuntu-Install-Debs.html)
 - [Ardupilot Installation Guide](https://ardupilot.org/dev/docs/building-setup-linux.html#building-setup-linux)
-- [AP_DDS Installation Guide](https://github.com/ArduPilot/ardupilot/tree/master/libraries/AP_DDS)
+- [Ardupilot ROS 2 Workspace Installation Guide](https://ardupilot.org/dev/docs/ros2.html)
 - [Gazebo Harmonic Installation Guide](https://gazebosim.org/docs/harmonic/install/)
 - [Ardupilot Gazebo Plugin Installation Guide](https://ardupilot.org/dev/docs/sitl-with-gazebo.html)
 
@@ -35,17 +35,17 @@ Verify `/ardupilot_dds` node is running:
 ros2 node list
 ```
 
-2. Clone ProjectParagon repository
+2. Clone Repository
 ``` bash
 git clone https://github.com/ParagonAutonomus/ProjectParagon.git
 ```
-3. TODO ...
-
-### Simulation Guide
+3. Build Workspace
+``` bash
+cd ~/ProjectParagon/sensor_drone/drone_ws/
+colcon build --symlink-install
+```
+4. Run Launch Script (TODO)
 
 ### Development Guide
-Source these ROS workspaces in `~/.bashrc`
-```
-source /opt/ros/humble/setup.bash     # core ros workspace
-source ~/ardu_ws/install/setup.bash   # ardupilot dds workspace
-```
+- [Google C++ Style Guide](https://google.github.io/styleguide/cppguide.html)
+- [ROS 2 Tutorials](https://docs.ros.org/en/humble/Tutorials/Beginner-Client-Libraries.html)
