@@ -12,13 +12,18 @@
 
 *Verify your installation, the following should run successfully.*
 
+Source these ROS workspaces in `~/.bashrc`
+```
+source /opt/ros/humble/setup.bash     # core ros workspace
+source ~/ardu_ws/install/setup.bash   # ardupilot dds workspace
+```
+
 Run Gazebo:
 ``` bash
 gz sim -v4 -r iris_runway.sdf
 ```
 Run microROS agent (UDP for SITL):
 ```
-cd ~/ardupilot/libraries/AP_DDS
 ros2 run micro_ros_agent micro_ros_agent udp4 -p 2019
 ```
 Run SITL with DDS enabled:
@@ -39,3 +44,8 @@ git clone https://github.com/ParagonAutonomus/ProjectParagon.git
 ### Simulation Guide
 
 ### Development Guide
+Source these ROS workspaces in `~/.bashrc`
+```
+source /opt/ros/humble/setup.bash     # core ros workspace
+source ~/ardu_ws/install/setup.bash   # ardupilot dds workspace
+```

@@ -225,3 +225,16 @@ CVS
 *.mode2v3
 *.perspectivev3
 xcuserdata/
+
+# Ignore build, install, log directories
+build/
+install/
+log/
+.vscode/
+
+# Ignore colcon metadata files
+.colcon/
+
+# Ignore dependencies cache
+src/.rosinstall
+src/CMakeLists.txt
