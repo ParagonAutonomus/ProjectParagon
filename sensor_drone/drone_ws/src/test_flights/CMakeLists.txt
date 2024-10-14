@@ -9,10 +9,16 @@ endif()
 find_package(ament_cmake REQUIRED)
 find_package(rclcpp REQUIRED) 
 find_package(std_msgs REQUIRED)
-find_package(geographic_msgs REQUIRED) 
+find_package(geographic_msgs REQUIRED)
+find_package(ardupilot_msgs REQUIRED)
 
 add_executable(test_controller src/test_controller.cpp)
-ament_target_dependencies(test_controller rclcpp std_msgs geographic_msgs)
+ament_target_dependencies(test_controller 
+  rclcpp 
+  std_msgs 
+  geographic_msgs
+  ardupilot_msgs
+)
 
 install(TARGETS
   test_controller

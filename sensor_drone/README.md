@@ -40,6 +40,30 @@ ros2 node list
 git clone https://github.com/ParagonAutonomus/ProjectParagon.git
 ```
 3. Build and source workspace
+VSCode example `c_cpp_properties.json` cpp workspace configuration file
+```json
+{
+    "configurations": [
+        {
+            "name": "Linux",
+            "includePath": [
+                "${workspaceFolder}/**",
+                "/opt/ros/humble/include/**", 
+                "~/ardu_ws/install/ardupilot_msgs/include/**",
+                "/usr/include/**"        
+            ],
+            "defines": [],
+            "compilerPath": "/usr/lib/ccache/clang-14",
+            "cStandard": "c17",
+            "cppStandard": "c++14",
+            "intelliSenseMode": "linux-clang-x64"
+        }
+    ],
+    "version": 4
+}
+```
+
+Build `drone_ws` workspace
 ``` bash
 cd ~/ProjectParagon/sensor_drone/drone_ws/
 colcon build
@@ -57,8 +81,6 @@ ros2 node list
 ```
 
 4. Running `test_controller` node
-
-4. Run Launch Script (TODO)
 
 ### Development Guide
 - [Google C++ Style Guide](https://google.github.io/styleguide/cppguide.html)
