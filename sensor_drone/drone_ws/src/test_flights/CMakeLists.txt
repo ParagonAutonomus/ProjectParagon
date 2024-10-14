@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.8)
-project(drone_control)
+project(test_flights)
 
 if(CMAKE_COMPILER_IS_GNUCXX OR CMAKE_CXX_COMPILER_ID MATCHES "Clang")
   add_compile_options(-Wall -Wextra -Wpedantic)
@@ -7,9 +7,16 @@ endif()
 
 # find dependencies
 find_package(ament_cmake REQUIRED)
-# uncomment the following section in order to fill in
-# further dependencies manually.
-# find_package(<dependency> REQUIRED)
+find_package(rclcpp REQUIRED) 
+find_package(std_msgs REQUIRED)
+find_package(geographic_msgs REQUIRED) 
+
+add_executable(test_controller src/test_controller.cpp)
+ament_target_dependencies(test_controller rclcpp std_msgs geographic_msgs)
+
+install(TARGETS
+  test_controller
+  DESTINATION lib/${PROJECT_NAME})
 
 if(BUILD_TESTING)
   find_package(ament_lint_auto REQUIRED)

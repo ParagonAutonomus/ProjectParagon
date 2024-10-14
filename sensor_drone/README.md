@@ -39,11 +39,25 @@ ros2 node list
 ``` bash
 git clone https://github.com/ParagonAutonomus/ProjectParagon.git
 ```
-3. Build Workspace
+3. Build and source workspace
 ``` bash
 cd ~/ProjectParagon/sensor_drone/drone_ws/
-colcon build --symlink-install
+colcon build
 ```
+
+Source `drone_ws` workspace
+``` bash
+echo "source ~/ProjectParagon/sensor_drone/drone_ws/install/setup.bash" >> ~/.bashrc
+```
+
+Verify setup
+``` bash
+ros2 pkg list
+ros2 node list
+```
+
+4. Running `test_controller` node
+
 4. Run Launch Script (TODO)
 
 ### Development Guide
