@@ -63,22 +63,19 @@ VSCode example `c_cpp_properties.json` cpp workspace configuration file
 }
 ```
 
-Build `drone_ws` workspace
+Build and source `drone_ws` workspace
 ``` bash
 cd ~/ProjectParagon/sensor_drone/drone_ws/
 colcon build
-```
-
-Source `drone_ws` workspace
-``` bash
 echo "source ~/ProjectParagon/sensor_drone/drone_ws/install/setup.bash" >> ~/.bashrc
 ```
 
-Verify setup
 ``` bash
 ros2 pkg list
-ros2 node list
 ```
+
+3. Simulation setup
+Replace `~/gz_ws/src/ardupilot_gazebo/models/iris_with_standoffs/model.sdf` with `~/ProjectParagon/sensor_drone/model.sdf`.
 
 4. Running `test_controller` node
 
