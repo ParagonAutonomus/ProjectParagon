@@ -75,7 +75,20 @@ ros2 pkg list
 ```
 
 3. Simulation setup
-Replace `~/gz_ws/src/ardupilot_gazebo/models/iris_with_standoffs/model.sdf` with `~/ProjectParagon/sensor_drone/model.sdf`.
+
+Replace default model
+``` bash
+cp ~/ProjectParagon/sensor_drone/model.sdf ~/gz_ws/src/ardupilot_gazebo/models/iris_with_standoffs/
+```
+
+Test SITL Commands
+``` bash
+module load message
+mode guided
+arm throttle
+takeoff 5
+message SET_POSITION_TARGET_LOCAL_NED 0 0 0 7 3576 20 0 0 0 0 0 0 0 0 0 0
+```
 
 4. Running `test_controller` node
 
