@@ -1,6 +1,19 @@
 # Sensor Drone
 *More info can be found on the [wiki](https://github.com/ParagonAutonomus/ProjectParagon/wiki/Sensor-Drone).*
 
+### TODOS
+- [] Gazebo sensor interface
+- [] MAVLink interface with Mission Planner
+- [] Mission context and controller
+- [] Takeoff, landing, and return procedures
+- [] Battery and range calculations
+- [] Path finding implementation
+- [] Wildfire detection from thermal imager
+- [] Camera feed generation
+- [] Wildfire classification model
+- [] Target waypoint generation from risk-map
+- [] Custom Mission Planner and monitoring system???
+
 ### Installation Guide
 *[Ubuntu 22.04.5 LTS](https://mirror.pilotfiber.com/ubuntu-iso/22.04.5/) is recommended*
 1. Install prerequisite libraries
