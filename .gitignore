@@ -238,3 +238,7 @@ log/
 # Ignore dependencies cache
 src/.rosinstall
 src/CMakeLists.txt
+
+# These should be built independently
+sensor_drone/drone_ws/src/mavlink
+sensor_drone/drone_ws/src/mavros
