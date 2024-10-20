@@ -32,8 +32,24 @@ private:
                                  std::shared_ptr<mavros_msgs::srv::CommandBool::Response> response) {
         if (request->value) {
             RCLCPP_INFO(this->get_logger(), "Flight sequence initiated.");
+
+            // Set mode to GUIDED
             if (!set_mode("GUIDED")) {
                 RCLCPP_ERROR(this->get_logger(), "Failed to set mode to GUIDED.");
+                response->success = false;
+                return;
+            }
+
+            // Arm throttle
+            if (!arm_throttle()) {
+                RCLCPP_ERROR(this->get_logger(), "Failed to arm throttle.");
+                response->success = false;
+                return;
+            }
+
+            // Takeoff 10m
+            if (!takeoff(10)) {
+                RCLCPP_ERROR(this->get_logger(), "Failed to takeoff.");
                 response->success = false;
                 return;
             }
@@ -68,6 +84,58 @@ private:
         }
 
         RCLCPP_INFO(this->get_logger(), "Mode set to %s", mode.c_str());
+        return true;
+    }
+
+    bool arm_throttle() {
+        auto request = std::make_shared<mavros_msgs::srv::CommandBool::Request>();
+        request->value = true;
+
+        RCLCPP_INFO(this->get_logger(), "Arming throttle.");
+
+        auto future = arming_client_->async_send_request(request);
+        auto result = future.wait_for(std::chrono::seconds(5));
+
+        if (result == std::future_status::timeout) {
+            RCLCPP_ERROR(this->get_logger(), "Failed to arm throttle: timeout.");
+            return false;
+        }
+
+        auto response = future.get();
+        if (!response->success) {
+            RCLCPP_ERROR(this->get_logger(), "Failed to arm throttle: not successful.");
+            return false;
+        }
+
+        RCLCPP_INFO(this->get_logger(), "Throttle armed.");
+        return true;
+    }
+
+    bool takeoff(float altitude) {
+        auto request = std::make_shared<mavros_msgs::srv::CommandTOL::Request>();
+        request->min_pitch = 0.0;
+        request->yaw = 0.0;
+        request->latitude = 0.0;
+        request->longitude = 0.0;
+        request->altitude = altitude;
+
+        RCLCPP_INFO(this->get_logger(), "Taking off.");
+
+        auto future = takeoff_client_->async_send_request(request);
+        auto result = future.wait_for(std::chrono::seconds(5));
+
+        if (result == std::future_status::timeout) {
+            RCLCPP_ERROR(this->get_logger(), "Failed to takeoff: timeout.");
+            return false;
+        }
+
+        auto response = future.get();
+        if (!response->success) {
+            RCLCPP_ERROR(this->get_logger(), "Failed to takeoff: not successful.");
+            return false;
+        }
+
+        RCLCPP_INFO(this->get_logger(), "Takeoff successful.");
         return true;
     }
 };

@@ -52,13 +52,10 @@ cd ~/ProjectParagon/sensor_drone/
 ./launch_sim.sh
 ```
 
-Test SITL commands
+Run `basic_flight_controller`
 ``` bash
-module load message
-mode guided
-arm throttle
-takeoff 5
-message SET_POSITION_TARGET_LOCAL_NED 0 0 0 7 3576 20 0 0 0 0 0 0 0 0 0 0
+ros2 run auto_uav basic_flight_controller
+ros2 service call /trigger_flight mavros_msgs/srv/CommandBool "{value: true}"
 ```
 
 ### Development Guide
