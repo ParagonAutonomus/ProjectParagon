@@ -1,9 +1,9 @@
 <?xml version="1.0"?>
 <?xml-model href="http://download.ros.org/schema/package_format3.xsd" schematypens="http://www.w3.org/2001/XMLSchema"?>
 <package format="3">
-  <name>test_flights</name>
+  <name>auto_uav</name>
   <version>0.0.0</version>
-  <description>Package containing basic nodes for controlling the drone</description>
+  <description>Autonomous companion system for wildfire sensor drone.</description>
   <maintainer email="bwaldropw@aol.com">Brendan Waldrop</maintainer>
   <license>TODO: License declaration</license>
 
