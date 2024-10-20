@@ -14,7 +14,7 @@
 git clone https://github.com/ParagonAutonomus/ProjectParagon.git
 ```
 
-3. Install [mavros](https://github.com/mavlink/mavros/tree/ros2/mavros) and build project
+3. Install [mavros](https://github.com/mavlink/mavros/tree/ros2/mavros) ~~and [ros_gz](https://github.com/gazebosim/ros_gz)~~ from source
 ``` bash
 sudo apt install -y python3-vcstool python3-rosinstall-generator python3-osrf-pycommon
 
@@ -32,7 +32,7 @@ vcs import src < /tmp/mavros.repos
 rosdep install --from-paths src --ignore-src -y
 
 # Install GeographicLib datasets
-./src/mavros/mavros/scripts/install_geographiclib_datasets.sh
+sudo ./src/mavros/mavros/scripts/install_geographiclib_datasets.sh
 
 # Build source
 colcon build
@@ -47,6 +47,9 @@ cp ~/ProjectParagon/sensor_drone/model.sdf ~/gz_ws/src/ardupilot_gazebo/models/i
 gz sim -v4 -r iris_runway.sdf
 sim_vehicle.py -v ArduCopter -f gazebo-iris --model JSON --map --console
 ros2 launch mavros apm.launch fcu_url:=udp://:14550@
+# or
+cd ~/ProjectParagon/sensor_drone/
+./launch_sim.sh
 ```
 
 Test SITL commands
@@ -59,5 +62,4 @@ message SET_POSITION_TARGET_LOCAL_NED 0 0 0 7 3576 20 0 0 0 0 0 0 0 0 0 0
 ```
 
 ### Development Guide
-- [Google C++ Style Guide](https://google.github.io/styleguide/cppguide.html)
 - [ROS 2 Tutorials](https://docs.ros.org/en/humble/Tutorials/Beginner-Client-Libraries.html)
