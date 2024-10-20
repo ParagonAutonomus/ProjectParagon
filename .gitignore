@@ -250,4 +250,4 @@ sensor_drone/drone_ws/src/ros_gz
 *.tlog
 *.tlog.raw
 
-*/log/
+*/logs/
