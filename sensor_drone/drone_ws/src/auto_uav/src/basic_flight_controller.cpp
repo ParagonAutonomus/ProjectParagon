@@ -4,8 +4,21 @@
 #include <mavros_msgs/srv/command_tol.hpp>
 #include <chrono>
 
+/**
+ * @class BasicFlightController
+ * @brief Basic flight controller that interacts with MAVROS services.
+ * 
+ * @author Brendan Waldrop
+ * @date October 2024
+ * @version 1.0
+ */
 class BasicFlightController :  public rclcpp::Node {
 public:
+    /**
+     * @brief Constructor for BasicFlightController.
+     * 
+     * Initializes the node, creates clients for MAVROS services, and creates a service for triggering flight.
+     */
     BasicFlightController() : Node("basic_flight_controller") {
         client_callback_group_ = this->create_callback_group(rclcpp::CallbackGroupType::MutuallyExclusive);
         service_callback_group_ = this->create_callback_group(rclcpp::CallbackGroupType::MutuallyExclusive);
@@ -28,6 +41,12 @@ private:
     rclcpp::CallbackGroup::SharedPtr client_callback_group_;
     rclcpp::CallbackGroup::SharedPtr service_callback_group_;
 
+    /**
+     * @brief Callback for triggering the flight sequence.
+     * 
+     * @param request Service request (command_bool) to trigger the flight sequence.
+     * @param response Service response (command_bool) to indicate success or failure.
+     */
     void trigger_flight_callback(const std::shared_ptr<mavros_msgs::srv::CommandBool::Request> request,
                                  std::shared_ptr<mavros_msgs::srv::CommandBool::Response> response) {
         if (request->value) {
@@ -62,6 +81,12 @@ private:
         }
     }
 
+    /**
+     * @brief Set the mode of the drone.
+     * 
+     * @param mode The mode to set the drone to. (e.g. GUIDED)
+     * @return true if the mode was set successfully, false otherwise.
+     */
     bool set_mode(const std::string& mode) {
         auto request = std::make_shared<mavros_msgs::srv::SetMode::Request>();
         request->base_mode = 0;
@@ -87,6 +112,11 @@ private:
         return true;
     }
 
+    /**
+     * @brief Arm the throttle of the drone.
+     * 
+     * @return true if the throttle was armed successfully, false otherwise.
+     */
     bool arm_throttle() {
         auto request = std::make_shared<mavros_msgs::srv::CommandBool::Request>();
         request->value = true;
@@ -111,6 +141,12 @@ private:
         return true;
     }
 
+    /**
+     * @brief Takeoff the drone to a specified altitude.
+     * 
+     * @param altitude The altitude to takeoff to.
+     * @return true if the drone took off successfully, false otherwise.
+     */
     bool takeoff(float altitude) {
         auto request = std::make_shared<mavros_msgs::srv::CommandTOL::Request>();
         request->min_pitch = 0.0;
@@ -140,6 +176,11 @@ private:
     }
 };
 
+/**
+ * @brief Main function for the basic flight controller node.
+ * 
+ * Initializes the node and executor for the basic flight controller.
+ */
 int main(int argc, char **argv) {
     rclcpp::init(argc, argv);
     
