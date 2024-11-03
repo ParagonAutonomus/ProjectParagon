@@ -1,7 +1,18 @@
 #include <rclcpp/rclcpp.hpp>
 #include <geographic_msgs/msg/geo_pose_stamped.hpp>
 #include <auto_uav_msgs/srv/update_next_target.hpp>
+#include <auto_uav_msgs/srv/set_mission_state.hpp>
+#include <std_msgs/msg/u_int8.hpp>
 #include <queue>
+
+enum DroneState {
+    IDLE = 0,
+    TAKEOFF = 1,
+    READY = 2,
+    MOVING = 3,
+    WAITING = 4,
+    LANDING = 5
+};
 
 /**
  * @class MissionController
@@ -16,21 +27,26 @@ public:
     /**
      * @brief Constructor for MissionController.
      */
-    MissionController() : Node("mission_controller") {
-        current_waypoint_pub_ = this->create_publisher<geographic_msgs::msg::GeoPoseStamped>("/auto_uav/mission_controller/current_waypoint", 10);
+    MissionController() : Node("mission_controller"), current_state_(DroneState::IDLE) {
+        current_target_pub_ = this->create_publisher<geographic_msgs::msg::GeoPoseStamped>("/auto_uav/mission_controller/current_target", 10);
+        current_state_pub_ = this->create_publisher<std_msgs::msg::UInt8>("/auto_uav/mission_controller/state", 10);
+
+        set_state_service_ = this->create_service<auto_uav_msgs::srv::SetMissionState>(
+            "/auto_uav/mission_controller/set_state",
+            std::bind(&MissionController::set_state_callback, this, std::placeholders::_1, std::placeholders::_2));
 
         update_next_target_service_ = this->create_service<auto_uav_msgs::srv::UpdateNextTarget>(
             "/auto_uav/mission_controller/update_next_target",
             std::bind(&MissionController::update_next_target_callback, this, std::placeholders::_1, std::placeholders::_2));
-
-        // publish current waypoint every 5 seconds
-        timer_ = this->create_wall_timer(std::chrono::seconds(5), std::bind(&MissionController::publish_current_waypoint, this));
+        
+        state_timer_ = this->create_wall_timer(std::chrono::seconds(1), std::bind(&MissionController::publish_current_state, this));
+        target_timer_ = this->create_wall_timer(std::chrono::seconds(1), std::bind(&MissionController::publish_current_target, this));
 
         RCLCPP_INFO(this->get_logger(), "Mission controller initialized.");
     }
 
     /**
-     * @brief Add a waypoint to the mission queue.
+     * @brief Add a waypoint to the mission queue. TESTING ONLY
      * 
      * @param waypoint The waypoint to add to the mission queue.
      */
@@ -41,16 +57,26 @@ public:
 private:
     std::queue<geographic_msgs::msg::GeoPoseStamped> waypoint_queue_;
     geographic_msgs::msg::GeoPoseStamped current_target_;
+    uint8_t current_state_;
 
-    rclcpp::Publisher<geographic_msgs::msg::GeoPoseStamped>::SharedPtr current_waypoint_pub_;
+    rclcpp::Publisher<geographic_msgs::msg::GeoPoseStamped>::SharedPtr current_target_pub_;
+    rclcpp::Publisher<std_msgs::msg::UInt8>::SharedPtr current_state_pub_;
     rclcpp::Service<auto_uav_msgs::srv::UpdateNextTarget>::SharedPtr update_next_target_service_;
-    rclcpp::TimerBase::SharedPtr timer_;
+    rclcpp::Service<auto_uav_msgs::srv::SetMissionState>::SharedPtr set_state_service_;
+    rclcpp::TimerBase::SharedPtr target_timer_;
+    rclcpp::TimerBase::SharedPtr state_timer_;
 
     /**
      * @brief Publish the current waypoint to the current waypoint topic.
      */
-    void publish_current_waypoint() {
-        current_waypoint_pub_->publish(current_target_);
+    void publish_current_target() {
+        current_target_pub_->publish(current_target_);
+    }
+
+    void publish_current_state() {
+        std_msgs::msg::UInt8 state_msg;
+        state_msg.data = current_state_;
+        current_state_pub_->publish(state_msg);
     }
 
     /**
@@ -69,8 +95,7 @@ private:
 
         current_target_ = waypoint_queue_.front();
         waypoint_queue_.pop();
-
-        current_waypoint_pub_->publish(current_target_);
+        publish_current_target();
 
         RCLCPP_INFO(
             this->get_logger(), 
@@ -80,6 +105,16 @@ private:
             current_target_.pose.position.altitude
         );
         response->success = true;
+    }
+
+    void set_state_callback(const std::shared_ptr<auto_uav_msgs::srv::SetMissionState::Request> request,
+                            std::shared_ptr<auto_uav_msgs::srv::SetMissionState::Response> response) {
+        current_state_ = request->state;
+        publish_current_state();
+
+        response->success = true;
+        response->message = "State updated successfully.";
+        RCLCPP_INFO(this->get_logger(), "State set to %u", current_state_);
     }
 };
 
