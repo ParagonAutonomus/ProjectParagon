@@ -52,10 +52,9 @@ cd ~/ProjectParagon/sensor_drone/
 ./launch_sim.sh
 ```
 
-Run `basic_flight_controller`
+Launch `auto_uav` package:
 ``` bash
-ros2 run auto_uav basic_flight_controller
-ros2 service call /trigger_flight mavros_msgs/srv/CommandBool "{value: true}"
+ros2 launch auto_uav auto_uav_launch.py
 ```
 
 ### Development Guide

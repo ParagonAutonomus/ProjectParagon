@@ -19,11 +19,21 @@ ament_target_dependencies(basic_flight_controller rclcpp mavros_msgs geographic_
 add_executable(mission_controller src/mission_controller.cpp)
 ament_target_dependencies(mission_controller rclcpp geographic_msgs auto_uav_msgs)
 
-# Install both executables
+# Add the navigator executable
+add_executable(navigator src/navigator.cpp) 
+ament_target_dependencies(navigator rclcpp geographic_msgs auto_uav_msgs)
+
+# Install all executables
 install(TARGETS
   basic_flight_controller
   mission_controller
+  navigator
   DESTINATION lib/${PROJECT_NAME}
+)
+
+# Install launch files
+install(DIRECTORY launch/
+  DESTINATION share/${PROJECT_NAME}/launch
 )
 
 if(BUILD_TESTING)
