@@ -1,0 +1,7 @@
+# Request: Empty request, no fields needed
+
+---
+
+# Response: Indicate success and provide updated waypoint
+bool success
+geographic_msgs/GeoPoseStamped updated_target

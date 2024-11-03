@@ -12,7 +12,7 @@
  * @date October 2024
  * @version 1.0
  */
-class BasicFlightController :  public rclcpp::Node {
+class BasicFlightController : public rclcpp::Node {
 public:
     /**
      * @brief Constructor for BasicFlightController.

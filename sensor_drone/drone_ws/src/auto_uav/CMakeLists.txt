@@ -8,10 +8,11 @@ endif()
 find_package(ament_cmake REQUIRED)
 find_package(rclcpp REQUIRED)
 find_package(mavros_msgs REQUIRED)
+find_package(geographic_msgs REQUIRED)
+find_package(auto_uav_msgs REQUIRED)
 
 add_executable(basic_flight_controller src/basic_flight_controller.cpp)
-
-ament_target_dependencies(basic_flight_controller rclcpp mavros_msgs)
+ament_target_dependencies(basic_flight_controller rclcpp mavros_msgs geographic_msgs auto_uav_msgs)
 
 install(TARGETS
   basic_flight_controller
@@ -20,7 +21,6 @@ install(TARGETS
 
 if(BUILD_TESTING)
   find_package(ament_lint_auto REQUIRED)
-  set(ament_cmake_cpplint_FOUND TRUE)
   ament_lint_auto_find_test_dependencies()
 endif()
 

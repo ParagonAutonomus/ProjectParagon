@@ -60,3 +60,25 @@ ros2 service call /trigger_flight mavros_msgs/srv/CommandBool "{value: true}"
 
 ### Development Guide
 - [ROS 2 Tutorials](https://docs.ros.org/en/humble/Tutorials/Beginner-Client-Libraries.html)
+
+Sample `.vscode/c_cpp_properties.json` configuration:
+``` json
+{
+    "configurations": [
+        {
+            "name": "Linux",
+            "includePath": [
+                "${workspaceFolder}/**",
+                "/opt/ros/humble/include/**",
+                "/usr/include/**"
+            ],
+            "defines": [],
+            "compilerPath": "/usr/lib/ccache/clang-14",
+            "cStandard": "c17",
+            "cppStandard": "c++14",
+            "intelliSenseMode": "linux-clang-x64"
+        }
+    ],
+    "version": 4
+}
+```
