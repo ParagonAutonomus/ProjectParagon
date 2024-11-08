@@ -4,15 +4,7 @@
 #include <auto_uav_msgs/srv/set_mission_state.hpp>
 #include <std_msgs/msg/u_int8.hpp>
 #include <queue>
-
-enum DroneState {
-    IDLE = 0,
-    TAKEOFF = 1,
-    READY = 2,
-    MOVING = 3,
-    WAITING = 4,
-    LANDING = 5
-};
+#include "drone_state.hpp"
 
 /**
  * @class MissionController
@@ -28,19 +20,27 @@ public:
      * @brief Constructor for MissionController.
      */
     MissionController() : Node("mission_controller"), current_state_(DroneState::IDLE) {
+        // create publishers for current target and state
         current_target_pub_ = this->create_publisher<geographic_msgs::msg::GeoPoseStamped>("/auto_uav/mission_controller/current_target", 10);
         current_state_pub_ = this->create_publisher<std_msgs::msg::UInt8>("/auto_uav/mission_controller/state", 10);
 
+        // open service to set the state of the mission controller
         set_state_service_ = this->create_service<auto_uav_msgs::srv::SetMissionState>(
             "/auto_uav/mission_controller/set_state",
             std::bind(&MissionController::set_state_callback, this, std::placeholders::_1, std::placeholders::_2));
 
+        // open service to update the next target
         update_next_target_service_ = this->create_service<auto_uav_msgs::srv::UpdateNextTarget>(
             "/auto_uav/mission_controller/update_next_target",
             std::bind(&MissionController::update_next_target_callback, this, std::placeholders::_1, std::placeholders::_2));
         
+        // timers to publish current state and target
         state_timer_ = this->create_wall_timer(std::chrono::seconds(1), std::bind(&MissionController::publish_current_state, this));
         target_timer_ = this->create_wall_timer(std::chrono::seconds(1), std::bind(&MissionController::publish_current_target, this));
+
+        // timer to poll for new waypoints if the drone state is WAITING
+        waiting_timer_ = this->create_wall_timer(std::chrono::seconds(1), std::bind(&MissionController::check_for_waypoints, this));
+        waiting_timer_->cancel();
 
         RCLCPP_INFO(this->get_logger(), "Mission controller initialized.");
     }
@@ -58,13 +58,15 @@ private:
     std::queue<geographic_msgs::msg::GeoPoseStamped> waypoint_queue_;
     geographic_msgs::msg::GeoPoseStamped current_target_;
     uint8_t current_state_;
-
     rclcpp::Publisher<geographic_msgs::msg::GeoPoseStamped>::SharedPtr current_target_pub_;
     rclcpp::Publisher<std_msgs::msg::UInt8>::SharedPtr current_state_pub_;
+    
     rclcpp::Service<auto_uav_msgs::srv::UpdateNextTarget>::SharedPtr update_next_target_service_;
     rclcpp::Service<auto_uav_msgs::srv::SetMissionState>::SharedPtr set_state_service_;
+    
     rclcpp::TimerBase::SharedPtr target_timer_;
     rclcpp::TimerBase::SharedPtr state_timer_;
+    rclcpp::TimerBase::SharedPtr waiting_timer_;
 
     /**
      * @brief Publish the current waypoint to the current waypoint topic.
@@ -112,9 +114,27 @@ private:
         current_state_ = request->state;
         publish_current_state();
 
+        // start polling for new waypoints if the drone is in the WAITING state
+        if (current_state_ == DroneState::WAITING) {
+            waiting_timer_->reset();
+        } else {
+            waiting_timer_->cancel();
+        }
+
         response->success = true;
         response->message = "State updated successfully.";
-        RCLCPP_INFO(this->get_logger(), "State set to %u", current_state_);
+        RCLCPP_INFO(this->get_logger(), "State set to %s.", drone_state_to_string(static_cast<DroneState>(current_state_)).c_str());
+    }
+
+
+    void check_for_waypoints() {
+        RCLCPP_INFO(this->get_logger(), "Checking for waypoints...");
+        if (current_state_ == DroneState::WAITING && !waypoint_queue_.empty()) {
+            current_state_ = DroneState::READY;
+            publish_current_state();
+            waiting_timer_->cancel();
+            RCLCPP_INFO(this->get_logger(), "Waypoint found. Drone set to READY.");
+        }
     }
 };
 
