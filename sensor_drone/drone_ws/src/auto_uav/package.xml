@@ -1,14 +1,21 @@
 <?xml version="1.0"?>
-<?xml-model href="http://download.ros.org/schema/package_format3.xsd" schematypens="http://www.w3.org/2001/XMLSchema"?>
 <package format="3">
   <name>auto_uav</name>
-  <version>0.0.0</version>
+  <version>0.1.0</version>
   <description>Autonomous companion system for wildfire sensor drone.</description>
   <maintainer email="bwaldropw@aol.com">Brendan Waldrop</maintainer>
-  <license>TODO: License declaration</license>
+  <license>Apache-2.0</license>
 
+  <!-- Build tool dependencies -->
   <buildtool_depend>ament_cmake</buildtool_depend>
 
+  <!-- Build, execution, and runtime dependencies -->
+  <depend>geographic_msgs</depend>
+  <depend>rclcpp</depend>
+  <depend>mavros_msgs</depend>
+  <depend>auto_uav_msgs</depend>
+
+  <!-- Testing dependencies -->
   <test_depend>ament_lint_auto</test_depend>
   <test_depend>ament_lint_common</test_depend>
 

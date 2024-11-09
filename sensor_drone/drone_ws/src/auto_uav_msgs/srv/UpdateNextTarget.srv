@@ -1,0 +1,4 @@
+
+---
+bool success
+geographic_msgs/GeoPoseStamped updated_target

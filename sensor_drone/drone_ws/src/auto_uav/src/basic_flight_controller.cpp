@@ -12,7 +12,7 @@
  * @date October 2024
  * @version 1.0
  */
-class BasicFlightController :  public rclcpp::Node {
+class BasicFlightController : public rclcpp::Node {
 public:
     /**
      * @brief Constructor for BasicFlightController.
@@ -27,7 +27,7 @@ public:
         arming_client_ = this->create_client<mavros_msgs::srv::CommandBool>("/mavros/cmd/arming", rmw_qos_profile_services_default, client_callback_group_);
         takeoff_client_ = this->create_client<mavros_msgs::srv::CommandTOL>("/mavros/cmd/takeoff", rmw_qos_profile_services_default, client_callback_group_);
         flight_service_ = this->create_service<mavros_msgs::srv::CommandBool>(
-            "trigger_flight", 
+            "/auto_uav/basic_flight_controller/trigger_flight", 
             std::bind(&BasicFlightController::trigger_flight_callback, this, std::placeholders::_1, std::placeholders::_2),
             rmw_qos_profile_services_default, service_callback_group_);
     }

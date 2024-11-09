@@ -246,8 +246,12 @@ sensor_drone/drone_ws/src/ros_gz
 
 *.DAT
 *.bin
+*.BIN
+*.TXT
 *.parm
 *.tlog
 *.tlog.raw
 
-*/logs/
+# mavros log files
+**/logs
+**/terrain
