@@ -8,13 +8,14 @@
 - [Ardupilot Installation Guide](https://ardupilot.org/dev/docs/building-setup-linux.html#building-setup-linux)
 - [Gazebo Harmonic Installation Guide](https://gazebosim.org/docs/harmonic/install/)
 - [Ardupilot Gazebo Plugin Installation Guide](https://ardupilot.org/dev/docs/sitl-with-gazebo.html)
+- [Gazebo Transport Installation Guide](https://gazebosim.org/api/transport/14/installation.html)
 
 2. Clone repository
 ``` bash
 git clone https://github.com/ParagonAutonomus/ProjectParagon.git
 ```
 
-3. Install [mavros](https://github.com/mavlink/mavros/tree/ros2/mavros) ~~and [ros_gz](https://github.com/gazebosim/ros_gz)~~ from source
+3. Install [mavros](https://github.com/mavlink/mavros/tree/ros2/mavros) from source
 ``` bash
 sudo apt install -y python3-vcstool python3-rosinstall-generator python3-osrf-pycommon
 
