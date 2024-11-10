@@ -17,4 +17,11 @@ def generate_launch_description():
             name='navigator',
             output='screen'
         ),
+        Node(
+            package='auto_uav',
+            executable='lidar_bridge',
+            namespace='auto_uav',
+            name='lidar_bridge',
+            output='screen'
+        ),
     ])
