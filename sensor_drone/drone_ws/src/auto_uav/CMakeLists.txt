@@ -29,6 +29,11 @@ ament_target_dependencies(navigator rclcpp geographic_msgs auto_uav_msgs sensor_
 add_executable(lidar_bridge src/lidar_bridge.cpp) 
 ament_target_dependencies(lidar_bridge rclcpp sensor_msgs gz-transport13)
 
+# Create library target
+add_library(path_finder src/path_finder.cpp)
+ament_target_dependencies(path_finder rclcpp geographic_msgs sensor_msgs)
+target_link_libraries(navigator path_finder)
+
 # Install all executables
 install(TARGETS
   basic_flight_controller
