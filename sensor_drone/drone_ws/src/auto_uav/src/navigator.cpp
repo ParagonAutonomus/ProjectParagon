@@ -4,6 +4,10 @@
 #include <auto_uav_msgs/srv/update_next_target.hpp>
 #include <auto_uav_msgs/srv/set_mission_state.hpp>
 #include <std_msgs/msg/u_int8.hpp>
+#include <mavros_msgs/srv/set_mode.hpp>
+#include <mavros_msgs/srv/command_bool.hpp>
+#include <mavros_msgs/srv/command_tol.hpp>
+#include <chrono>
 #include "drone_state.hpp"
 
 /**
@@ -38,12 +42,16 @@ public:
         // service clients
         set_state_client_ = this->create_client<auto_uav_msgs::srv::SetMissionState>(
             "/auto_uav/mission_controller/set_state", 
-            rmw_qos_profile_services_default, 
-            client_callback_group_);
+            rmw_qos_profile_services_default, client_callback_group_);
         update_next_target_client_ = this->create_client<auto_uav_msgs::srv::UpdateNextTarget>(
             "/auto_uav/mission_controller/update_next_target", 
-            rmw_qos_profile_services_default, 
-            client_callback_group_);
+            rmw_qos_profile_services_default, client_callback_group_);
+        set_mode_client_ = this->create_client<mavros_msgs::srv::SetMode>("/mavros/set_mode", 
+            rmw_qos_profile_services_default, client_callback_group_);
+        arming_client_ = this->create_client<mavros_msgs::srv::CommandBool>("/mavros/cmd/arming", 
+            rmw_qos_profile_services_default, client_callback_group_);
+        takeoff_client_ = this->create_client<mavros_msgs::srv::CommandTOL>("/mavros/cmd/takeoff", 
+            rmw_qos_profile_services_default, client_callback_group_);
 
         // publishers
         set_global_position_pub_ = this->create_publisher<geographic_msgs::msg::GeoPoseStamped>(
@@ -53,15 +61,22 @@ public:
     }
  
 private:
+    // subscribers
     rclcpp::Subscription<geographic_msgs::msg::GeoPoseStamped>::SharedPtr current_target_sub_;
     rclcpp::Subscription<sensor_msgs::msg::NavSatFix>::SharedPtr current_position_sub_;
     rclcpp::Subscription<std_msgs::msg::UInt8>::SharedPtr current_state_sub_;
-    
+
+    // clients
     rclcpp::Client<auto_uav_msgs::srv::SetMissionState>::SharedPtr set_state_client_;
     rclcpp::Client<auto_uav_msgs::srv::UpdateNextTarget>::SharedPtr update_next_target_client_;
+    rclcpp::Client<mavros_msgs::srv::SetMode>::SharedPtr set_mode_client_;
+    rclcpp::Client<mavros_msgs::srv::CommandBool>::SharedPtr arming_client_;
+    rclcpp::Client<mavros_msgs::srv::CommandTOL>::SharedPtr takeoff_client_;
     
+    // publishers
     rclcpp::Publisher<geographic_msgs::msg::GeoPoseStamped>::SharedPtr set_global_position_pub_;
 
+    // callback groups
     rclcpp::CallbackGroup::SharedPtr client_callback_group_;
 
     geographic_msgs::msg::GeoPoseStamped current_target_;
@@ -208,6 +223,100 @@ private:
         } else {
             return false;
         }
+    }
+
+    /**
+     * @brief Set the mode of the drone.
+     * 
+     * @param mode The mode to set the drone to. (e.g. GUIDED)
+     * @return true if the mode was set successfully, false otherwise.
+     */
+    bool set_mode(const std::string& mode) {
+        auto request = std::make_shared<mavros_msgs::srv::SetMode::Request>();
+        request->base_mode = 0;
+        request->custom_mode = mode;
+
+        RCLCPP_INFO(this->get_logger(), "Setting mode to %s", mode.c_str());
+
+        auto future = set_mode_client_->async_send_request(request);
+        auto result = future.wait_for(std::chrono::seconds(5));
+        
+        if (result == std::future_status::timeout) {
+            RCLCPP_ERROR(this->get_logger(), "Failed to set mode: timeout.");
+            return false;
+        }
+
+        auto response = future.get();
+        if (!response->mode_sent) {
+            RCLCPP_ERROR(this->get_logger(), "Failed to set mode: mode not sent.");
+            return false;
+        }
+
+        RCLCPP_INFO(this->get_logger(), "Mode set to %s", mode.c_str());
+        return true;
+    }
+
+    /**
+     * @brief Arm the throttle of the drone.
+     * 
+     * @return true if the throttle was armed successfully, false otherwise.
+     */
+    bool arm_throttle() {
+        auto request = std::make_shared<mavros_msgs::srv::CommandBool::Request>();
+        request->value = true;
+
+        RCLCPP_INFO(this->get_logger(), "Arming throttle.");
+
+        auto future = arming_client_->async_send_request(request);
+        auto result = future.wait_for(std::chrono::seconds(5));
+
+        if (result == std::future_status::timeout) {
+            RCLCPP_ERROR(this->get_logger(), "Failed to arm throttle: timeout.");
+            return false;
+        }
+
+        auto response = future.get();
+        if (!response->success) {
+            RCLCPP_ERROR(this->get_logger(), "Failed to arm throttle: not successful.");
+            return false;
+        }
+
+        RCLCPP_INFO(this->get_logger(), "Throttle armed.");
+        return true;
+    }
+
+    /**
+     * @brief Takeoff the drone to a specified altitude.
+     * 
+     * @param altitude The altitude to takeoff to.
+     * @return true if the drone took off successfully, false otherwise.
+     */
+    bool takeoff(float altitude) {
+        auto request = std::make_shared<mavros_msgs::srv::CommandTOL::Request>();
+        request->min_pitch = 0.0;
+        request->yaw = 0.0;
+        request->latitude = 0.0;
+        request->longitude = 0.0;
+        request->altitude = altitude;
+
+        RCLCPP_INFO(this->get_logger(), "Taking off.");
+
+        auto future = takeoff_client_->async_send_request(request);
+        auto result = future.wait_for(std::chrono::seconds(5));
+
+        if (result == std::future_status::timeout) {
+            RCLCPP_ERROR(this->get_logger(), "Failed to takeoff: timeout.");
+            return false;
+        }
+
+        auto response = future.get();
+        if (!response->success) {
+            RCLCPP_ERROR(this->get_logger(), "Failed to takeoff: not successful.");
+            return false;
+        }
+
+        RCLCPP_INFO(this->get_logger(), "Takeoff successful.");
+        return true;
     }
 };
 

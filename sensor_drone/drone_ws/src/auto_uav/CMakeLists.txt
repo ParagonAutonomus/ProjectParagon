@@ -19,11 +19,11 @@ ament_target_dependencies(basic_flight_controller rclcpp mavros_msgs geographic_
 
 # Add the mission_controller executable
 add_executable(mission_controller src/mission_controller.cpp)
-ament_target_dependencies(mission_controller rclcpp geographic_msgs auto_uav_msgs sensor_msgs)
+ament_target_dependencies(mission_controller rclcpp mavros_msgs geographic_msgs auto_uav_msgs sensor_msgs)
 
 # Add the navigator executable
 add_executable(navigator src/navigator.cpp) 
-ament_target_dependencies(navigator rclcpp geographic_msgs auto_uav_msgs sensor_msgs)
+ament_target_dependencies(navigator rclcpp mavros_msgs geographic_msgs auto_uav_msgs sensor_msgs)
 
 # Add the LidarBridge executable
 add_executable(lidar_bridge src/lidar_bridge.cpp) 
@@ -31,7 +31,7 @@ ament_target_dependencies(lidar_bridge rclcpp sensor_msgs gz-transport13)
 
 # Create library target
 add_library(path_finder src/path_finder.cpp)
-ament_target_dependencies(path_finder rclcpp geographic_msgs sensor_msgs)
+ament_target_dependencies(path_finder rclcpp mavros_msgs geographic_msgs sensor_msgs)
 target_link_libraries(navigator path_finder)
 
 # Install all executables

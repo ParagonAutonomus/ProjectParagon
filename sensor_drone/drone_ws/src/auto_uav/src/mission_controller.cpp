@@ -155,34 +155,52 @@ int main(int argc, char **argv) {
     mission_controller->add_waypoint(waypoint1);
 
     geographic_msgs::msg::GeoPoseStamped waypoint2;
-    waypoint2.pose.position.latitude = -35.36275018;
-    waypoint2.pose.position.longitude = 149.16559226;
+    waypoint2.pose.position.latitude = -35.36284814 + 0.001;
+    waypoint2.pose.position.longitude = 149.16516125;
     waypoint2.pose.position.altitude = 600;
     mission_controller->add_waypoint(waypoint2);
 
     geographic_msgs::msg::GeoPoseStamped waypoint3;
-    waypoint3.pose.position.latitude = -35.36290000;
-    waypoint3.pose.position.longitude = 149.16520000;
+    waypoint3.pose.position.latitude = -35.36284814 - 0.001;
+    waypoint3.pose.position.longitude = 149.16516125;
     waypoint3.pose.position.altitude = 600;
     mission_controller->add_waypoint(waypoint3);
 
     geographic_msgs::msg::GeoPoseStamped waypoint4;
-    waypoint4.pose.position.latitude = -35.36270000;
-    waypoint4.pose.position.longitude = 149.16530000;
+    waypoint4.pose.position.latitude = -35.36284814;
+    waypoint4.pose.position.longitude = 149.16516125 + 0.001;
     waypoint4.pose.position.altitude = 600;
     mission_controller->add_waypoint(waypoint4);
 
     geographic_msgs::msg::GeoPoseStamped waypoint5;
-    waypoint5.pose.position.latitude = -35.36282000;
-    waypoint5.pose.position.longitude = 149.16516000;
+    waypoint5.pose.position.latitude = -35.36284814;
+    waypoint5.pose.position.longitude = 149.16516125 - 0.001;
     waypoint5.pose.position.altitude = 600;
     mission_controller->add_waypoint(waypoint5);
 
     geographic_msgs::msg::GeoPoseStamped waypoint6;
-    waypoint6.pose.position.latitude = -35.36278000;
-    waypoint6.pose.position.longitude = 149.16525000;
+    waypoint6.pose.position.latitude = -35.36284814 + 0.001;
+    waypoint6.pose.position.longitude = 149.16516125 + 0.001;
     waypoint6.pose.position.altitude = 600;
     mission_controller->add_waypoint(waypoint6);
+
+    geographic_msgs::msg::GeoPoseStamped waypoint7;
+    waypoint7.pose.position.latitude = -35.36284814 - 0.001;
+    waypoint7.pose.position.longitude = 149.16516125 - 0.001;
+    waypoint7.pose.position.altitude = 600;
+    mission_controller->add_waypoint(waypoint7);
+
+    geographic_msgs::msg::GeoPoseStamped waypoint8;
+    waypoint8.pose.position.latitude = -35.36284814 + 0.001;
+    waypoint8.pose.position.longitude = 149.16516125 - 0.001;
+    waypoint8.pose.position.altitude = 600;
+    mission_controller->add_waypoint(waypoint8);
+
+    geographic_msgs::msg::GeoPoseStamped waypoint9;
+    waypoint9.pose.position.latitude = -35.36284814 - 0.001;
+    waypoint9.pose.position.longitude = 149.16516125 + 0.001;
+    waypoint9.pose.position.altitude = 600;
+    mission_controller->add_waypoint(waypoint9);
 
     rclcpp::spin(mission_controller);
     rclcpp::shutdown();
