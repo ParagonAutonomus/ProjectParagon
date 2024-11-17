@@ -1,5 +1,7 @@
 #include <rclcpp/rclcpp.hpp>
 #include <geographic_msgs/msg/geo_pose_stamped.hpp>
+#include <geometry_msgs/msg/twist_stamped.hpp>
+#include <nav_msgs/msg/odometry.hpp>
 #include <sensor_msgs/msg/nav_sat_fix.hpp>
 #include <auto_uav_msgs/srv/update_next_target.hpp>
 #include <auto_uav_msgs/srv/set_mission_state.hpp>
@@ -9,6 +11,7 @@
 #include <mavros_msgs/srv/command_tol.hpp>
 #include <chrono>
 #include "drone_state.hpp"
+#include "drone_constants.hpp"
 
 /**
  * @class Navigator
@@ -23,7 +26,7 @@ public:
     /**
      * @brief Constructor for navigator node.
      */
-    Navigator() : Node("navigator"), position_margin_(19.5) {
+    Navigator() : Node("navigator"), position_margin_(DroneConstants::POSITION_MARGIN) {
         // callback group for service clients
         client_callback_group_ = this->create_callback_group(rclcpp::CallbackGroupType::MutuallyExclusive);
 
@@ -35,9 +38,15 @@ public:
         current_position_sub_ = this->create_subscription<sensor_msgs::msg::NavSatFix>(
             "/mavros/global_position/global",
             qos, std::bind(&Navigator::current_position_callback, this, std::placeholders::_1));
+        current_local_position_sub_ = this->create_subscription<nav_msgs::msg::Odometry>(
+            "/mavros/global_position/local",
+            qos, std::bind(&Navigator::current_local_position_callback, this, std::placeholders::_1));
         current_state_sub_ = this->create_subscription<std_msgs::msg::UInt8>(
             "/auto_uav/mission_controller/state",
             10, std::bind(&Navigator::current_state_callback, this, std::placeholders::_1));
+        current_velocity_sub_ = this->create_subscription<geometry_msgs::msg::TwistStamped>(
+            "/mavros/local_position/velocity_local",
+            qos, std::bind(&Navigator::current_velocity_callback, this, std::placeholders::_1));
 
         // service clients
         set_state_client_ = this->create_client<auto_uav_msgs::srv::SetMissionState>(
@@ -52,6 +61,8 @@ public:
             rmw_qos_profile_services_default, client_callback_group_);
         takeoff_client_ = this->create_client<mavros_msgs::srv::CommandTOL>("/mavros/cmd/takeoff", 
             rmw_qos_profile_services_default, client_callback_group_);
+        land_client_ = this->create_client<mavros_msgs::srv::CommandTOL>("/mavros/cmd/land",
+            rmw_qos_profile_services_default, client_callback_group_);
 
         // publishers
         set_global_position_pub_ = this->create_publisher<geographic_msgs::msg::GeoPoseStamped>(
@@ -64,7 +75,9 @@ private:
     // subscribers
     rclcpp::Subscription<geographic_msgs::msg::GeoPoseStamped>::SharedPtr current_target_sub_;
     rclcpp::Subscription<sensor_msgs::msg::NavSatFix>::SharedPtr current_position_sub_;
+    rclcpp::Subscription<nav_msgs::msg::Odometry>::SharedPtr current_local_position_sub_;
     rclcpp::Subscription<std_msgs::msg::UInt8>::SharedPtr current_state_sub_;
+    rclcpp::Subscription<geometry_msgs::msg::TwistStamped>::SharedPtr current_velocity_sub_;
 
     // clients
     rclcpp::Client<auto_uav_msgs::srv::SetMissionState>::SharedPtr set_state_client_;
@@ -72,6 +85,7 @@ private:
     rclcpp::Client<mavros_msgs::srv::SetMode>::SharedPtr set_mode_client_;
     rclcpp::Client<mavros_msgs::srv::CommandBool>::SharedPtr arming_client_;
     rclcpp::Client<mavros_msgs::srv::CommandTOL>::SharedPtr takeoff_client_;
+    rclcpp::Client<mavros_msgs::srv::CommandTOL>::SharedPtr land_client_;
     
     // publishers
     rclcpp::Publisher<geographic_msgs::msg::GeoPoseStamped>::SharedPtr set_global_position_pub_;
@@ -81,6 +95,8 @@ private:
 
     geographic_msgs::msg::GeoPoseStamped current_target_;
     sensor_msgs::msg::NavSatFix current_position_;
+    nav_msgs::msg::Odometry current_local_position_;
+    geometry_msgs::msg::TwistStamped current_velocity_;
     uint8_t current_state_;
     double position_margin_;
 
@@ -100,6 +116,25 @@ private:
      */
     void current_position_callback(const sensor_msgs::msg::NavSatFix::SharedPtr msg) {
         current_position_ = *msg;
+
+        if (current_state_ == DroneState::LANDING) {
+            if (std::abs(current_velocity_.twist.linear.z) <= 0.01) {
+                RCLCPP_INFO(this->get_logger(), "Landed. Setting state to IDLE.");
+                if (!set_state(DroneState::IDLE)) {
+                    RCLCPP_ERROR(this->get_logger(), "Failed to set state to IDLE.");
+                }
+            }
+        }
+
+        if (current_state_ == DroneState::LIFTING) {
+            if (std::abs(DroneConstants::TARGET_ALTITUDE - current_local_position_.pose.pose.position.z) <= DroneConstants::ALTITUDE_MARGIN) {
+                RCLCPP_INFO(this->get_logger(), "Altitude reached. Setting state to WAITING.");
+                if (!set_state(DroneState::WAITING)) {
+                    RCLCPP_ERROR(this->get_logger(), "Failed to set state to WAITING.");
+                }
+            }
+        }
+
         if (current_state_ == DroneState::MOVING) {
             if (is_target_reached()) {
                 RCLCPP_INFO(this->get_logger(), "Target reached. Setting state to WAITING.");
@@ -108,6 +143,19 @@ private:
                 }
             }
         }
+    }
+
+    /**
+     * @brief Callback for current local position subscriber.
+     * 
+     * @param msg
+     */
+    void current_local_position_callback(const nav_msgs::msg::Odometry::SharedPtr msg) {
+        current_local_position_ = *msg;
+    }
+
+    void current_velocity_callback(const geometry_msgs::msg::TwistStamped::SharedPtr msg) {
+        current_velocity_ = *msg;
     }
 
     /**
@@ -125,7 +173,7 @@ private:
             current_target_.pose.position.altitude
         );
 
-        RCLCPP_INFO(this->get_logger(), "Distance to target: %.2f", distance);
+        // RCLCPP_INFO(this->get_logger(), "Distance to target: %.2f", distance);
         return  distance < position_margin_;
     }
 
@@ -157,6 +205,50 @@ private:
      */
     void current_state_callback(const std_msgs::msg::UInt8::SharedPtr msg) {
         current_state_ = msg->data;
+
+        if (msg->data == DroneState::LAND) {
+            RCLCPP_INFO(this->get_logger(), "Drone is in LAND state.");
+
+            if (!set_state(DroneState::LANDING)) {
+                RCLCPP_ERROR(this->get_logger(), "Failed to set state to LANDING.");
+                return;
+            }
+
+            if (!land()) {
+                RCLCPP_ERROR(this->get_logger(), "Failed to send land request.");
+                return;
+            }
+
+            RCLCPP_INFO(this->get_logger(), "Landing initiated.");
+        }
+
+        if (msg->data == DroneState::TAKEOFF) {
+            RCLCPP_INFO(this->get_logger(), "Drone is in TAKEOFF state.");
+
+            if (!set_state(DroneState::LIFTING)) {
+                RCLCPP_ERROR(this->get_logger(), "Failed to set state to LIFTING.");
+                return;
+            }
+
+            if (!set_mode("GUIDED")) {
+                RCLCPP_ERROR(this->get_logger(), "Failed to set mode to GUIDED.");
+                return;
+            }
+
+            if (!arm_throttle()) {
+                RCLCPP_ERROR(this->get_logger(), "Failed to arm throttle.");
+                return;
+            }
+
+            if (!takeoff(DroneConstants::TARGET_ALTITUDE)) {
+                RCLCPP_ERROR(this->get_logger(), "Failed to takeoff.");
+                return;
+            }
+
+
+            RCLCPP_INFO(this->get_logger(), "Takeoff initiated. Monitoring altitude...");
+        }
+
         if (msg->data == DroneState::READY) {
             RCLCPP_INFO(this->get_logger(), "Drone is READY, updating next target.");
         
@@ -316,6 +408,39 @@ private:
         }
 
         RCLCPP_INFO(this->get_logger(), "Takeoff successful.");
+        return true;
+    }
+
+    /**
+     * @brief Request landing.
+     * 
+     * @return true if the land command executed successfully, false otherwise.
+     */
+    bool land() {
+        auto request = std::make_shared<mavros_msgs::srv::CommandTOL::Request>();
+        request->min_pitch = 0.0;
+        request->yaw = 0.0;
+        request->latitude = 0.0;
+        request->longitude = 0.0;
+        request->altitude = 0.0;
+
+        RCLCPP_INFO(this->get_logger(), "Landing.");
+
+        auto future = land_client_->async_send_request(request);
+        auto result = future.wait_for(std::chrono::seconds(5));
+
+        if (result == std::future_status::timeout) {
+            RCLCPP_ERROR(this->get_logger(), "Failed to land: timeout.");
+            return false;
+        }
+
+        auto response = future.get();
+        if (!response->success) {
+            RCLCPP_ERROR(this->get_logger(), "Failed to land: not successful.");
+            return false;
+        }
+
+        RCLCPP_INFO(this->get_logger(), "Landing successful.");
         return true;
     }
 };

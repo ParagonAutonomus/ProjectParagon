@@ -4,6 +4,7 @@
 #include <auto_uav_msgs/srv/set_mission_state.hpp>
 #include <std_msgs/msg/u_int8.hpp>
 #include <queue>
+#include "drone_constants.hpp"
 #include "drone_state.hpp"
 
 /**
@@ -19,7 +20,7 @@ public:
     /**
      * @brief Constructor for mission controller node.
      */
-    MissionController() : Node("mission_controller"), current_state_(DroneState::IDLE) {
+    MissionController() : Node("mission_controller"), current_state_(DroneConstants::DEFAULT_STATE) {
         current_target_pub_ = this->create_publisher<geographic_msgs::msg::GeoPoseStamped>("/auto_uav/mission_controller/current_target", 10);
         current_state_pub_ = this->create_publisher<std_msgs::msg::UInt8>("/auto_uav/mission_controller/state", 10);
 
