@@ -8,6 +8,7 @@ endif()
 find_package(ament_cmake REQUIRED)
 find_package(rclcpp REQUIRED)
 find_package(mavros_msgs REQUIRED)
+find_package(nav_msgs REQUIRED)
 find_package(geographic_msgs REQUIRED)
 find_package(sensor_msgs REQUIRED)
 find_package(auto_uav_msgs REQUIRED)
@@ -23,7 +24,7 @@ ament_target_dependencies(mission_controller rclcpp mavros_msgs geographic_msgs 
 
 # Add the navigator executable
 add_executable(navigator src/navigator.cpp) 
-ament_target_dependencies(navigator rclcpp mavros_msgs geographic_msgs auto_uav_msgs sensor_msgs)
+ament_target_dependencies(navigator rclcpp mavros_msgs geographic_msgs auto_uav_msgs sensor_msgs nav_msgs)
 
 # Add the LidarBridge executable
 add_executable(lidar_bridge src/lidar_bridge.cpp) 

@@ -1,5 +1,6 @@
 #include <rclcpp/rclcpp.hpp>
 #include <geographic_msgs/msg/geo_pose_stamped.hpp>
+#include <nav_msgs/msg/odometry.hpp>
 #include <sensor_msgs/msg/nav_sat_fix.hpp>
 #include <auto_uav_msgs/srv/update_next_target.hpp>
 #include <auto_uav_msgs/srv/set_mission_state.hpp>
@@ -9,6 +10,7 @@
 #include <mavros_msgs/srv/command_tol.hpp>
 #include <chrono>
 #include "drone_state.hpp"
+#include "drone_constants.hpp"
 
 /**
  * @class Navigator
@@ -23,7 +25,7 @@ public:
     /**
      * @brief Constructor for navigator node.
      */
-    Navigator() : Node("navigator"), position_margin_(19.5) {
+    Navigator() : Node("navigator"), position_margin_(DroneConstants::POSITION_MARGIN) {
         // callback group for service clients
         client_callback_group_ = this->create_callback_group(rclcpp::CallbackGroupType::MutuallyExclusive);
 
@@ -35,6 +37,9 @@ public:
         current_position_sub_ = this->create_subscription<sensor_msgs::msg::NavSatFix>(
             "/mavros/global_position/global",
             qos, std::bind(&Navigator::current_position_callback, this, std::placeholders::_1));
+        current_local_position_sub_ = this->create_subscription<nav_msgs::msg::Odometry>(
+            "/mavros/global_position/local",
+            qos, std::bind(&Navigator::current_local_position_callback, this, std::placeholders::_1));
         current_state_sub_ = this->create_subscription<std_msgs::msg::UInt8>(
             "/auto_uav/mission_controller/state",
             10, std::bind(&Navigator::current_state_callback, this, std::placeholders::_1));
@@ -64,6 +69,7 @@ private:
     // subscribers
     rclcpp::Subscription<geographic_msgs::msg::GeoPoseStamped>::SharedPtr current_target_sub_;
     rclcpp::Subscription<sensor_msgs::msg::NavSatFix>::SharedPtr current_position_sub_;
+    rclcpp::Subscription<nav_msgs::msg::Odometry>::SharedPtr current_local_position_sub_;
     rclcpp::Subscription<std_msgs::msg::UInt8>::SharedPtr current_state_sub_;
 
     // clients
@@ -81,6 +87,7 @@ private:
 
     geographic_msgs::msg::GeoPoseStamped current_target_;
     sensor_msgs::msg::NavSatFix current_position_;
+    nav_msgs::msg::Odometry current_local_position_;
     uint8_t current_state_;
     double position_margin_;
 
@@ -100,6 +107,16 @@ private:
      */
     void current_position_callback(const sensor_msgs::msg::NavSatFix::SharedPtr msg) {
         current_position_ = *msg;
+
+        if (current_state_ == DroneState::LIFTING) {
+            if (std::abs(DroneConstants::TARGET_ALTITUDE - current_local_position_.pose.pose.position.z) <= DroneConstants::ALTITUDE_MARGIN) {
+                RCLCPP_INFO(this->get_logger(), "Altitude reached. Setting state to WAITING.");
+                if (!set_state(DroneState::WAITING)) {
+                    RCLCPP_ERROR(this->get_logger(), "Failed to set state to WAITING.");
+                }
+            }
+        }
+
         if (current_state_ == DroneState::MOVING) {
             if (is_target_reached()) {
                 RCLCPP_INFO(this->get_logger(), "Target reached. Setting state to WAITING.");
@@ -108,6 +125,10 @@ private:
                 }
             }
         }
+    }
+
+    void current_local_position_callback(const nav_msgs::msg::Odometry::SharedPtr msg) {
+        current_local_position_ = *msg;
     }
 
     /**
@@ -125,7 +146,7 @@ private:
             current_target_.pose.position.altitude
         );
 
-        RCLCPP_INFO(this->get_logger(), "Distance to target: %.2f", distance);
+        // RCLCPP_INFO(this->get_logger(), "Distance to target: %.2f", distance);
         return  distance < position_margin_;
     }
 
@@ -157,6 +178,34 @@ private:
      */
     void current_state_callback(const std_msgs::msg::UInt8::SharedPtr msg) {
         current_state_ = msg->data;
+
+        if (msg->data == DroneState::TAKEOFF) {
+            RCLCPP_INFO(this->get_logger(), "Drone is in TAKEOFF state.");
+
+            if (!set_state(DroneState::LIFTING)) {
+                RCLCPP_ERROR(this->get_logger(), "Failed to set state to LIFTING.");
+                return;
+            }
+
+            if (!set_mode("GUIDED")) {
+                RCLCPP_ERROR(this->get_logger(), "Failed to set mode to GUIDED.");
+                return;
+            }
+
+            if (!arm_throttle()) {
+                RCLCPP_ERROR(this->get_logger(), "Failed to arm throttle.");
+                return;
+            }
+
+            if (!takeoff(DroneConstants::TARGET_ALTITUDE)) {
+                RCLCPP_ERROR(this->get_logger(), "Failed to takeoff.");
+                return;
+            }
+
+
+            RCLCPP_INFO(this->get_logger(), "Takeoff initiated. Monitoring altitude...");
+        }
+
         if (msg->data == DroneState::READY) {
             RCLCPP_INFO(this->get_logger(), "Drone is READY, updating next target.");
         

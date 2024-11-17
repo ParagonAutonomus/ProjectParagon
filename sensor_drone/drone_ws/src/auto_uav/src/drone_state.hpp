@@ -7,7 +7,9 @@ enum DroneState {
     READY = 2,
     MOVING = 3,
     WAITING = 4,
-    LANDING = 5
+    LANDING = 5,
+    LIFTING = 6,
+    LAND = 7
 };
 
 inline std::string drone_state_to_string(DroneState state) {
@@ -24,6 +26,10 @@ inline std::string drone_state_to_string(DroneState state) {
             return "WAITING";
         case DroneState::LANDING:
             return "LANDING";
+        case DroneState::LIFTING:
+            return "LIFTING";
+        case DroneState::LAND:
+            return "LAND";
         default:
             return "UNKNOWN";
     }
