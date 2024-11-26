@@ -41,6 +41,7 @@ colcon build
 # Add source to ~/.bash and copy over simulation model
 echo "source ~/ProjectParagon/sensor_drone/drone_ws/install/setup.bash" >> ~/.bashrc
 cp ~/ProjectParagon/sensor_drone/model.sdf ~/gz_ws/src/ardupilot_gazebo/models/iris_with_standoffs/
+cp ~/ProjectParagon/sensor_drone/iris_runway.sdf ~/gz_ws/src/ardupilot_gazebo/worlds/
 ```
 
 4. Launch simulation
