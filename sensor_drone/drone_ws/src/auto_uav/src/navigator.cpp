@@ -154,6 +154,11 @@ private:
         current_local_position_ = *msg;
     }
 
+    /**
+     * @brief Callback for current velocity subscriber.
+     * 
+     * @param msg
+     */
     void current_velocity_callback(const geometry_msgs::msg::TwistStamped::SharedPtr msg) {
         current_velocity_ = *msg;
     }
@@ -206,6 +211,7 @@ private:
     void current_state_callback(const std_msgs::msg::UInt8::SharedPtr msg) {
         current_state_ = msg->data;
 
+        // check for LAND command, start landing sequence
         if (msg->data == DroneState::LAND) {
             RCLCPP_INFO(this->get_logger(), "Drone is in LAND state.");
 
@@ -222,6 +228,7 @@ private:
             RCLCPP_INFO(this->get_logger(), "Landing initiated.");
         }
 
+        // check for TAKEOFF command, start takeoff sequence
         if (msg->data == DroneState::TAKEOFF) {
             RCLCPP_INFO(this->get_logger(), "Drone is in TAKEOFF state.");
 
@@ -249,6 +256,7 @@ private:
             RCLCPP_INFO(this->get_logger(), "Takeoff initiated. Monitoring altitude...");
         }
 
+        // check for READY state, update next target
         if (msg->data == DroneState::READY) {
             RCLCPP_INFO(this->get_logger(), "Drone is READY, updating next target.");
         

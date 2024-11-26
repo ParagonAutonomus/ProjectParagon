@@ -24,4 +24,11 @@ def generate_launch_description():
             name='lidar_bridge',
             output='screen'
         ),
+        Node(
+            package='auto_uav',
+            executable='thermal_camera_bridge',
+            namespace='auto_uav',
+            name='thermal_camera_bridge',
+            output='screen'
+        ),
     ])

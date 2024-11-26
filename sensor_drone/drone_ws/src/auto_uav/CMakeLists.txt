@@ -31,6 +31,10 @@ ament_target_dependencies(navigator rclcpp mavros_msgs geographic_msgs auto_uav_
 add_executable(lidar_bridge src/lidar_bridge.cpp) 
 ament_target_dependencies(lidar_bridge rclcpp sensor_msgs gz-transport13)
 
+# Add the ThermalCameraBridge executable
+add_executable(thermal_camera_bridge src/thermal_camera_bridge.cpp)
+ament_target_dependencies(thermal_camera_bridge rclcpp sensor_msgs gz-transport13)
+
 # Create library target
 add_library(path_finder src/path_finder.cpp)
 ament_target_dependencies(path_finder rclcpp mavros_msgs geographic_msgs sensor_msgs)
@@ -42,6 +46,7 @@ install(TARGETS
   mission_controller
   navigator
   lidar_bridge
+  thermal_camera_bridge
   DESTINATION lib/${PROJECT_NAME}
 )
 
